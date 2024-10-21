@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Insert title here</title>
+    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    <script>
+
+                var is_iOS = navigator.userAgent.match(/iPhone|iPad|iPod/i) == null ? false : true;
+                var is_Android = navigator.userAgent.match(/Android/i) == null ? false : true;
+
+                console.log("is_iOS: " + is_iOS);
+                console.log("is_Android: " + is_Android);
+
+                // 아래 형식으로 메서드를 생성하여 네이티브에서 부른다
+                window.NativeInterface = {
+                    setDeviceId: (deviceIds) => {
+
+                        if (is_Android) {
+                            var parsed = JSON.parse(deviceIds);
+                            var deviceId = parsed.deviceId;
+                            var firebaseToken = parsed.firebaseToken;
+                        }
+
+                        if (is_iOS) {
+                            var parsed = JSON.stringify(deviceIds);
+                            var deviceId = JSON.stringify(deviceIds.deviceId);
+                            var firebaseToken = JSON.stringify(deviceIds.firebaseToken);
+                        }
+
+                        console.log("네이티브에서 받은 디바이스 고유ID: " + deviceId);
+                        console.log("네이티브에서 받은 파이어베이스 토큰: " + firebaseToken);
+                        $("#deviceId").text(deviceId);
+                    },
+                }
+
+                $(function() {
+
+                    // 기기고유값 받기 버튼
+                    $("#setDeviceId").click(function() {
+                        // 안드로이드
+                        if (is_Android) {
+                            Android.setDeviceId();
+                        }
+                        // 아이폰
+                        if (is_iOS) {
+                            webkit.messageHandlers.setDeviceId.postMessage("");
+                        }
+                    });
+
+                    // 앱종료 버튼
+                    $("#forceQuitApp").click(function() {
+                        // 안드로이드
+                        if (is_Android) {
+                            Android.forceQuitApp();
+                        }
+                        // 아이폰
+                        if (is_iOS) {
+                            webkit.messageHandlers.forceQuitApp.postMessage("");
+                        }
+                    });
+
+                    // alert
+                    $("#alert").click(function() {
+                        alert("alert");
+                    });
+
+                    // confirm
+                    $("#confirm").click(function() {
+                        confirm("confirm");
+                    });
+
+                    // prompt
+                    $("#prompt").click(function() {
+                        prompt("prompt");
+                    });
+
+
+                });
+            </script>
+</head>
+<body>
+<h1>---웹뷰---</h1>
+<ul>
+    <li>기기 고유값: <span id="deviceId"></span></li>
+</ul>
+<span>카메라/사진첩</span>
+<input type="file" accept="image/*" />
+<span>카메라</span>
+<input type="file" accept="image/*" capture="camera"/>
+<input type="button" id="alert" value="alert"/>
+<input type="button" id="confirm" value="confirm"/>
+<input type="button" id="prompt" value="prompt"/>
+<input type="button" id="setDeviceId" value="기기 고유값 받기"/>
+<input type="button" id="forceQuitApp" value="앱 종료하기"/>
+</body>
+</html>
