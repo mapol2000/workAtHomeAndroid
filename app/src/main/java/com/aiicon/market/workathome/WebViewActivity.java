@@ -1,15 +1,17 @@
 package com.aiicon.market.workathome;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
@@ -23,10 +25,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Message;
-import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
@@ -44,7 +43,6 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -55,17 +53,14 @@ public class WebViewActivity extends AppCompatActivity {
     // region variables
     public BackgroundWebView webView;
     public ImageView imageView;
-    public final static int FILECHOOSER_NORMAL_REQ_CODE = 2001;
-    public final static int FILECHOOSER_LOLLIPOP_REQ_CODE = 2002;
-    public ValueCallback<Uri> filePathCallbackNormal;
     private Uri cameraImageUri = null;
     private long backBtnTime = 0;
     private static int storedVersionCode;
     private static String storedVersionName;
+    public ValueCallback<Uri[]> filePathCallbackLollipop;
     // endregion
 
     // region App Life Cycle
-    @SuppressLint("JavascriptInterface")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,7 +86,7 @@ public class WebViewActivity extends AppCompatActivity {
 
         // 버전 체크 및 업데이트
         saveVersionNameAndCode(this);
-        isAppUpdated(this);
+        //isAppUpdated(this);
 
 
         // 웹뷰 세팅
@@ -101,8 +96,10 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setDomStorageEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setDefaultTextEncodingName("UTF-8");
-        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+//        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
+
+        webSettings.setBuiltInZoomControls(true);
 
         // 뒤로가기
         this.getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
@@ -153,47 +150,8 @@ public class WebViewActivity extends AppCompatActivity {
             }
         });
 
-        webView.setWebViewClient(new WebViewClient() {
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-
-                String url = request.getUrl().toString();
-                if (request.getUrl().getScheme().equals("intent")) {
-                    try {
-                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-
-                        String fallbackUrl = intent.getStringExtra("browser_fallback_url");
-                        if (fallbackUrl != null) {
-                            webView.loadUrl(fallbackUrl);
-                            return true;
-                        }
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    webView.loadUrl(url);
-                }
-
-                return super.shouldOverrideUrlLoading(view, request);
-            }
-
-            // 네트워크(WI-FI, 모바일데이터) 상태에 이상이 생길 시 호출되는 콜백함수
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                super.onReceivedError(view, request, error);
-
-                if (error.getDescription().equals("net::ERR_INTERNET_DISCONNECTED")) {
-                    webView.removeView(view);
-                    Intent intent = new Intent(getApplicationContext(), NetworkNotConnectionActivity.class);
-                    startActivity(intent);
-                }
-            }
-        });
-
         webView.setWebChromeClient(new WebChromeClient() {
 
-            @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
 
                 WebView newWebview = new WebView(WebViewActivity.this);
@@ -203,7 +161,7 @@ public class WebViewActivity extends AppCompatActivity {
                 dialog.show();
 
                 newWebview.setWebChromeClient(new WebChromeClient() {
-                    @Override
+
                     public void onCloseWindow(WebView window) {
                         dialog.dismiss();
                     }
@@ -268,51 +226,101 @@ public class WebViewActivity extends AppCompatActivity {
             }
 
             // 파일 선택
+            // For Android 5.0+
             @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+            public boolean onShowFileChooser(
+                    WebView webView, ValueCallback<Uri[]> filePathCallback,
+                    FileChooserParams fileChooserParams) {
 
-                if (filePathCallback != null) {
-                    filePathCallback.onReceiveValue(null);
+                // Callback 초기화 (중요!)
+                if (filePathCallbackLollipop != null) {
+                    filePathCallbackLollipop.onReceiveValue(null);
+                    filePathCallbackLollipop = null;
                 }
+                filePathCallbackLollipop = filePathCallback;
 
-                boolean isCapture = fileChooserParams.isCaptureEnabled();
-                runCamera(isCapture);
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+
+                startActivityResult.launch(intent);
                 return true;
             }
         });
 
+        webView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+
+                String url = request.getUrl().toString();
+                if (request.getUrl().getScheme().equals("intent")) {
+                    try {
+                        Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+
+                        String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+                        if (fallbackUrl != null) {
+                            webView.loadUrl(fallbackUrl);
+                            return true;
+                        }
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    webView.loadUrl(url);
+                }
+
+                return super.shouldOverrideUrlLoading(view, request);
+            }
+
+            // 네트워크(WI-FI, 모바일데이터) 상태에 이상이 생길 시 호출되는 콜백함수
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+
+                if (error.getDescription().equals("net::ERR_INTERNET_DISCONNECTED")) {
+                    webView.removeView(view);
+                    Intent intent = new Intent(getApplicationContext(), NetworkNotConnectionActivity.class);
+                    startActivity(intent);
+                }
+            }
+        });
+
         // url load
-        webView.loadUrl("http://dpis.mnd.go.kr:8090");
+//        webView.loadUrl("http://dpis.mnd.go.kr:8090");
 //        webView.loadUrl("https://www.kafb2b.or.kr");
-//        webView.loadUrl("file:///android_asset/test/test.html");
+        webView.loadUrl("file:///android_asset/test/test.html");
 
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
     }
 
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-        webView.reload();
-    }
+//    @Override
+//    protected void onRestart() {
+//        super.onRestart();
+//        webView.reload();
+//    }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
-        switch (requestCode) {
-            case FILECHOOSER_NORMAL_REQ_CODE:
-                if (resultCode == RESULT_OK) {
-                    if (filePathCallbackNormal == null) return;
-                    Uri result = (data == null || resultCode != RESULT_OK) ? null : data.getData();
-                    filePathCallbackNormal.onReceiveValue(result);
-                    filePathCallbackNormal = null;
+        ActivityResultLauncher<Intent> startActivityResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+        @Override
+        public void onActivityResult(ActivityResult result) {
+            Intent data = new Intent(result.getData());
+            Uri mResult = Uri.parse(data.toString());
+            // 선택
+            if (result.getResultCode() == RESULT_OK) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    filePathCallbackLollipop.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result.getResultCode(), data));
+                } else {
+                    filePathCallbackLollipop.onReceiveValue(new Uri[]{mResult});
                 }
-                break;
-            default:
-                break;
+                filePathCallbackLollipop = null;
+            } else { // 선택 X
+                if (filePathCallbackLollipop != null) {
+                    filePathCallbackLollipop.onReceiveValue(null);
+                    filePathCallbackLollipop = null;
+                }
+            }
         }
-
-        super.onActivityResult(requestCode, resultCode, data);
-    }
+    });
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -435,36 +443,6 @@ public class WebViewActivity extends AppCompatActivity {
         }
         return result;
     }
-
-    // 사진 촬영 및 사진 선택
-    private void runCamera(boolean _isCapture) {
-
-        Intent intentCamera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        File path = getFilesDir();
-        File file = new File(path, "image.png");
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            cameraImageUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".fileprovider", file);
-        } else {
-            cameraImageUri = Uri.fromFile(file);
-        }
-        intentCamera.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
-
-        if (!_isCapture) {
-            Intent pickIntent = new Intent(Intent.ACTION_PICK);
-            pickIntent.setType(MediaStore.Images.Media.CONTENT_TYPE);
-            pickIntent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-
-            String pickTitle = "사진을 가져올 방법을 선택하세요.";
-            Intent chooserIntent = Intent.createChooser(pickIntent, pickTitle);
-
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{intentCamera});
-            startActivityForResult(chooserIntent, FILECHOOSER_LOLLIPOP_REQ_CODE);
-        } else {
-            startActivityForResult(intentCamera, FILECHOOSER_LOLLIPOP_REQ_CODE);
-        }
-    }
     // endregion
 
     // region Web App Interface
@@ -479,6 +457,12 @@ public class WebViewActivity extends AppCompatActivity {
         @JavascriptInterface
         public void forceQuitApp() {
             finish();
+        }
+
+        // 앱 업데이트
+        @JavascriptInterface
+        public void updateApp() {
+            isAppUpdated(mContext);
         }
     }
     // endregion
