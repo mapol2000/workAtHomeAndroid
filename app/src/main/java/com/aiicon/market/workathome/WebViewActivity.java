@@ -106,7 +106,7 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setDomStorageEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setDefaultTextEncodingName("UTF-8");
-//        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
 
         webSettings.setBuiltInZoomControls(true);
@@ -120,7 +120,9 @@ public class WebViewActivity extends AppCompatActivity {
                 long curTime = System.currentTimeMillis();
                 long gapTime = curTime - backBtnTime;
 
-                if (webView.canGoBack() && !webView.getUrl().contains("/client/mn/main/main.do".toLowerCase())) {
+                // 현재는 팝업 열어 뒤로 가기 위한 예제로 ! 해제 해둠
+//                if (webView.canGoBack() && !webView.getUrl().contains("/client/mn/main/main.do".toLowerCase())) {
+                if (webView.canGoBack() && webView.getUrl().contains("/client/mn/main/main.do".toLowerCase())) {
                     webView.goBack();
                 } else if (0 <= gapTime && 2000 >= gapTime) {
                     finish();
@@ -276,6 +278,8 @@ public class WebViewActivity extends AppCompatActivity {
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
+                } else if (url.contains("kafb2b")) {
+                    webView.canGoBack();
                 } else {
                     webView.loadUrl(url);
                 }
@@ -299,22 +303,23 @@ public class WebViewActivity extends AppCompatActivity {
         // url load
 //        webView.loadUrl("http://dpis.mnd.go.kr:8090");
 //        webView.loadUrl("https://www.kafb2b.or.kr");
+//        https://kafb2b.or.kr/client/cs/bbs/cmmn/1000000007/bbscttListPage.do
 
         webView.loadUrl("file:///android_asset/test/test.html");
 
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
         // 앱 위변조 검증 요청
-        try {
-            new AppIronManager()
-                    .setActivity(WebViewActivity.this)
-                    .setCallbackListener(mAppIronListener)
-                    .setDomain(mServerAddress)
-                    .setUserValue("id: raon")
-                    .start();
-        } catch (AppIronException e) {
-            Toast.makeText(WebViewActivity.this, ""+e.getErrorMessage(), Toast.LENGTH_SHORT).show();
-        }
+//        try {
+//            new AppIronManager()
+//                    .setActivity(WebViewActivity.this)
+//                    .setCallbackListener(mAppIronListener)
+//                    .setDomain(mServerAddress)
+//                    .setUserValue("id: raon")
+//                    .start();
+//        } catch (AppIronException e) {
+//            Toast.makeText(WebViewActivity.this, ""+e.getErrorMessage(), Toast.LENGTH_SHORT).show();
+//        }
     }
 
     // region AppIron
