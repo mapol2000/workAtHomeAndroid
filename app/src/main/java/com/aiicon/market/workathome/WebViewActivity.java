@@ -68,7 +68,6 @@ public class WebViewActivity extends AppCompatActivity {
     private static String storedVersionName;
     public ValueCallback<Uri[]> filePathCallbackLollipop;
     private String mServerAddress = "https://s.raonsecure.co.kr:9456";
-    private String deviceId;
     // endregion
 
     // region App Life Cycle
@@ -452,7 +451,7 @@ public class WebViewActivity extends AppCompatActivity {
             PackageInfo packageInfo = context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0);
             int versionCode = packageInfo.versionCode;
-            String versionName=packageInfo.versionName;
+            String versionName = packageInfo.versionName;
 
             storedVersionCode = versionCode;
             storedVersionName = versionName;
@@ -545,6 +544,17 @@ public class WebViewActivity extends AppCompatActivity {
         @JavascriptInterface
         public void updateApp() {
             isAppUpdated(mContext);
+        }
+
+        // 앱버전 받기
+        @JavascriptInterface
+        public void setAppVersion() {
+            webView.post(new Runnable() {
+                @Override
+                public void run() {
+                    webView.loadUrl("javascript:window.NativeInterface.setAppVersion('"+storedVersionName+"')");
+                }
+            });
         }
 
         // 디바이스 아이디
