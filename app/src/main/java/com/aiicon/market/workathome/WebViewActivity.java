@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -43,6 +42,14 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.raonsecure.appironlib.AppIronManager;
+import com.raonsecure.appironlib.error.AppIronError;
+import com.raonsecure.appironlib.exception.AppIronException;
+import com.raonsecure.appironlib.listener.AppIronListener;
+import com.aiicon.market.workathome.crypto.CryptoUtil;
+
+import org.json.JSONObject;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -58,6 +65,7 @@ public class WebViewActivity extends AppCompatActivity {
     private static int storedVersionCode;
     private static String storedVersionName;
     public ValueCallback<Uri[]> filePathCallbackLollipop;
+    private String mServerAddress = "https://s.raonsecure.co.kr:9456";
     // endregion
 
     // region App Life Cycle
@@ -289,10 +297,80 @@ public class WebViewActivity extends AppCompatActivity {
         // url load
 //        webView.loadUrl("http://dpis.mnd.go.kr:8090");
 //        webView.loadUrl("https://www.kafb2b.or.kr");
+
         webView.loadUrl("file:///android_asset/test/test.html");
 
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
+
+        // 앱 위변조 검증 요청
+        try {
+            new AppIronManager()
+                    .setActivity(WebViewActivity.this)
+                    .setCallbackListener(mAppIronListener)
+                    .setDomain(mServerAddress)
+                    .setUserValue("id: raon")
+                    .start();
+        } catch (AppIronException e) {
+            Toast.makeText(WebViewActivity.this, ""+e.getErrorMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
+
+    // region AppIron
+    private AppIronListener mAppIronListener = new AppIronListener() {
+        @Override
+        public void onResult(byte[] bytes) {
+            decrypt(bytes);
+        }
+
+        @Override
+        public void onError(AppIronError appIronError) {
+            Toast.makeText(
+                            WebViewActivity.this,
+                            "[TouchEnAppIron 에러] 에러코드 : " + appIronError.getCode() + ", 에러 메세지 : " + appIronError.getMessage(),
+                            Toast.LENGTH_SHORT)
+                    .show();
+            Log.v("AppIRON", "[TouchEnAppIron 에러] 에러코드 : " + appIronError.getCode() + ", 에러 메세지 : " + appIronError.getMessage());
+        }
+    };
+
+    private void decrypt(byte[] data) {
+        try {
+            String decryptData = new CryptoUtil(getApplicationContext()).decryptSeed(data);
+
+            JSONObject jsonObject = new JSONObject(decryptData);
+            String result1 = jsonObject.getString("result1");
+            String result2 = jsonObject.getString("result2");
+            String result3 = jsonObject.getString("result3");
+
+            if(confirm(result1)) {
+                // 앱 위변조 검증 실패
+                Toast.makeText(WebViewActivity.this, "앱 위변조를 탐지하였습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if(confirm(result2)) {
+                // OS 위변조 검증 실패
+                Toast.makeText(WebViewActivity.this, "OS 위변조를 탐지하였습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if(confirm(result3)) {
+                // 디버깅 검증 실패
+                Toast.makeText(WebViewActivity.this, "디버깅을 탐지하였습니다.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // success
+            Toast.makeText(WebViewActivity.this, "검증에 성공하였습니다.", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean confirm(String result) {
+        return result.contentEquals("true") ? true : false;
+    }
+    // endregion
 
 //    @Override
 //    protected void onRestart() {

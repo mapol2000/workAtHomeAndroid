@@ -50,6 +50,14 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!--   Rooting 탐지를 위한 서비스     -->
+        <service
+            android:name="com.raonsecure.appironlib.services.IsolatedService"
+            android:enabled="true"
+            android:exported="true"
+            android:isolatedProcess="true"
+            android:process=":tmpService"/>
     </application>
 
 </manifest>
