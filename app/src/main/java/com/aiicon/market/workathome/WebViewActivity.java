@@ -24,6 +24,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Message;
+import android.provider.Settings;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
@@ -48,6 +49,7 @@ import com.raonsecure.appironlib.exception.AppIronException;
 import com.raonsecure.appironlib.listener.AppIronListener;
 import com.aiicon.market.workathome.crypto.CryptoUtil;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -66,6 +68,7 @@ public class WebViewActivity extends AppCompatActivity {
     private static String storedVersionName;
     public ValueCallback<Uri[]> filePathCallbackLollipop;
     private String mServerAddress = "https://s.raonsecure.co.kr:9456";
+    private String deviceId;
     // endregion
 
     // region App Life Cycle
@@ -458,6 +461,7 @@ public class WebViewActivity extends AppCompatActivity {
         }
     }
 
+    // 앱 업데이트 확인
     public boolean isAppUpdated(Context context){
         boolean result=false;
         try{
@@ -541,6 +545,24 @@ public class WebViewActivity extends AppCompatActivity {
         @JavascriptInterface
         public void updateApp() {
             isAppUpdated(mContext);
+        }
+
+        // 디바이스 아이디
+        @JavascriptInterface
+        public void setDeviceId() {
+            webView.post(new Runnable() {
+                @Override
+                public void run() {
+                    String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+                    JSONObject deviceIds = new JSONObject();
+                    try {
+                        deviceIds.put("deviceId", deviceId);
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                    webView.loadUrl("javascript:window.NativeInterface.setDeviceId('"+deviceIds+"')");
+                }
+            });
         }
     }
     // endregion

@@ -21,17 +21,14 @@
                 if (is_Android) {
                     var parsed = JSON.parse(deviceIds);
                     var deviceId = parsed.deviceId;
-                    var firebaseToken = parsed.firebaseToken;
                 }
 
                 if (is_iOS) {
                     var parsed = JSON.stringify(deviceIds);
                     var deviceId = JSON.stringify(deviceIds.deviceId);
-                    var firebaseToken = JSON.stringify(deviceIds.firebaseToken);
                 }
 
                 console.log("네이티브에서 받은 디바이스 고유ID: " + deviceId);
-                console.log("네이티브에서 받은 파이어베이스 토큰: " + firebaseToken);
                 $("#deviceId").text(deviceId);
             },
         }
@@ -98,7 +95,7 @@
 <body>
 <h1>---개발기능---</h1>
 <ul>
-    <!--    <li>기기 고유값: <span id="deviceId"></span></li>-->
+        <li>기기 고유값: <span id="deviceId"></span></li>
 </ul>
 <span>카메라/사진첩</span>
 <input type="file" accept="image/*"/>
@@ -106,7 +103,7 @@
 <input type="button" id="confirm" value="confirm"/>
 <input type="button" id="prompt" value="prompt"/>
 <input type="button" id="updateApp" value="앱업데이트"/>
-<!--<input type="button" id="setDeviceId" value="기기 고유값 받기"/>-->
+<input type="button" id="setDeviceId" value="기기 고유값 받기"/>
 <input type="button" id="forceQuitApp" value="앱 종료하기"/>
 </body>
 </html>
