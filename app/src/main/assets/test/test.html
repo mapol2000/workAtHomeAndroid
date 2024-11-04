@@ -105,6 +105,11 @@
                 window.open("https://www.kafb2b.or.kr");
             });
 
+            // download
+            $("#download").click(function() {
+                window.open("https://kafb2b.or.kr/client/cs/bbs/cmmn/1000000007/bbscttListPage.do");
+            });
+
             // updateApp
             $("#updateApp").click(function() {
 
@@ -129,12 +134,13 @@
     <li>기기 고유값: <span id="deviceId"></span></li>
     <li>현재 앱버전: <span id="appVersion"></span></li>
 </ul>
-<span>카메라/사진첩</span>
+<span>파일/사진첩</span>
 <input type="file" accept="image/*"/>
 <input type="button" id="alert" value="얼럿"/>
 <input type="button" id="confirm" value="컨펌"/>
 <input type="button" id="prompt" value="prompt"/>
 <input type="button" id="popup" value="window.open() 팝업"/>
+<input type="button" id="download" value="다운로드"/>
 <input type="button" id="setAppVersion" value="앱버전 확인"/>
 <input type="button" id="updateApp" value="앱업데이트"/>
 <input type="button" id="setDeviceId" value="기기 고유값 받기"/>

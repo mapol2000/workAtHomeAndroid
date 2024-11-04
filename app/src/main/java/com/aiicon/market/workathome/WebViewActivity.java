@@ -122,7 +122,7 @@ public class WebViewActivity extends AppCompatActivity {
 
                 // 현재는 팝업 열어 뒤로 가기 위한 예제로 ! 해제 해둠
 //                if (webView.canGoBack() && !webView.getUrl().contains("/client/mn/main/main.do".toLowerCase())) {
-                if (webView.canGoBack() && webView.getUrl().contains("/client/mn/main/main.do".toLowerCase())) {
+                if (webView.canGoBack() && webView.getUrl().contains("kafb2b".toLowerCase())) {
                     webView.goBack();
                 } else if (0 <= gapTime && 2000 >= gapTime) {
                     finish();
@@ -303,9 +303,20 @@ public class WebViewActivity extends AppCompatActivity {
         // url load
 //        webView.loadUrl("http://dpis.mnd.go.kr:8090");
 //        webView.loadUrl("https://www.kafb2b.or.kr");
-//        https://kafb2b.or.kr/client/cs/bbs/cmmn/1000000007/bbscttListPage.do
 
         webView.loadUrl("file:///android_asset/test/test.html");
+
+        new AlertDialog.Builder(webView.getContext())
+                .setTitle("알림")
+                .setMessage("현재는 임시 테스트용으로 만들어졌으며\n추후 기능 변경이 있을 수 있습니다.")
+                .setPositiveButton("확인", new AlertDialog.OnClickListener(){
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .setCancelable(false)
+                .create()
+                .show();
 
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
