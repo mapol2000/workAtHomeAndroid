@@ -42,6 +42,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.window.SplashScreen;
 
 import com.raonsecure.appironlib.AppIronManager;
 import com.raonsecure.appironlib.error.AppIronError;
@@ -301,10 +302,10 @@ public class WebViewActivity extends AppCompatActivity {
         });
 
         // url load
-//        webView.loadUrl("http://dpis.mnd.go.kr:8090");
+        webView.loadUrl("http://dpis.mnd.go.kr:8090/indexDv.do");
 //        webView.loadUrl("https://www.kafb2b.or.kr");
 
-        webView.loadUrl("file:///android_asset/test/test.html");
+//        webView.loadUrl("file:///android_asset/test/test.html");
 
         new AlertDialog.Builder(webView.getContext())
                 .setTitle("알림")
@@ -321,16 +322,16 @@ public class WebViewActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
         // 앱 위변조 검증 요청
-//        try {
-//            new AppIronManager()
-//                    .setActivity(WebViewActivity.this)
-//                    .setCallbackListener(mAppIronListener)
-//                    .setDomain(mServerAddress)
-//                    .setUserValue("id: raon")
-//                    .start();
-//        } catch (AppIronException e) {
-//            Toast.makeText(WebViewActivity.this, ""+e.getErrorMessage(), Toast.LENGTH_SHORT).show();
-//        }
+        try {
+            new AppIronManager()
+                    .setActivity(WebViewActivity.this)
+                    .setCallbackListener(mAppIronListener)
+                    .setDomain(mServerAddress)
+                    .setUserValue("id: raon")
+                    .start();
+        } catch (AppIronException e) {
+            Toast.makeText(WebViewActivity.this, ""+e.getErrorMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     // region AppIron
