@@ -42,7 +42,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.window.SplashScreen;
 
 import com.raonsecure.appironlib.AppIronManager;
 import com.raonsecure.appironlib.error.AppIronError;
@@ -63,7 +62,6 @@ public class WebViewActivity extends AppCompatActivity {
     // region variables
     public BackgroundWebView webView;
     public ImageView imageView;
-    private Uri cameraImageUri = null;
     private long backBtnTime = 0;
     private static int storedVersionCode;
     private static String storedVersionName;
@@ -79,12 +77,6 @@ public class WebViewActivity extends AppCompatActivity {
 
         webView = findViewById(R.id.webview);
         imageView = findViewById(R.id.loadingImg);
-
-        // 캡쳐방지
-//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-
-        // 캡쳐방지 해제
-//        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
         // 권한확인
         String[] permissions = {
