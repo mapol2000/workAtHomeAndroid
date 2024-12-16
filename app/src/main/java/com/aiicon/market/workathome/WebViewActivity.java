@@ -102,7 +102,11 @@ public class WebViewActivity extends AppCompatActivity {
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         webSettings.setMediaPlaybackRequiresUserGesture(false);
 
-        webSettings.setBuiltInZoomControls(true);
+        // 화면세팅
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setUseWideViewPort(true);
+
+//        webSettings.setBuiltInZoomControls(true);
 
         // 뒤로가기
         this.getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(true) {
@@ -113,10 +117,10 @@ public class WebViewActivity extends AppCompatActivity {
                 long curTime = System.currentTimeMillis();
                 long gapTime = curTime - backBtnTime;
 
-                // 현재는 팝업 열어 뒤로 가기 위한 예제로 ! 해제 해둠
+                // 뒤로가기 제한
 //                if (webView.canGoBack() && !webView.getUrl().contains("/client/mn/main/main.do".toLowerCase())) {
-                if (webView.canGoBack() && webView.getUrl().contains("kafb2b".toLowerCase())) {
-                    webView.goBack();
+                if (webView.canGoBack() && webView.getUrl().contains("dpis.mnd.go.kr".toLowerCase())) {
+//                    webView.goBack();
                 } else if (0 <= gapTime && 2000 >= gapTime) {
                     finish();
                 } else {
@@ -298,18 +302,6 @@ public class WebViewActivity extends AppCompatActivity {
 //        webView.loadUrl("https://www.kafb2b.or.kr");
 
 //        webView.loadUrl("file:///android_asset/test/test.html");
-
-        new AlertDialog.Builder(webView.getContext())
-                .setTitle("알림")
-                .setMessage("현재는 임시 테스트용으로 만들어졌으며\n추후 기능 변경이 있을 수 있습니다.")
-                .setPositiveButton("확인", new AlertDialog.OnClickListener(){
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                })
-                .setCancelable(false)
-                .create()
-                .show();
 
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
 
